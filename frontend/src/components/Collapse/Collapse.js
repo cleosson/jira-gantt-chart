@@ -1,9 +1,13 @@
 import React from "react";
 import styled from 'styled-components';
-import Ticket from '../Ticket/Ticket';
 
+const InnerColappse = styled.div`
+  display: flex;
+  width: 100%;
+`;
+  
 const Heading = styled.div`
-  width: 200px;
+  width: ${props => (props.isEpicList ? (props.open ? "150px": "300px") : "146px")};
   border: 1px solid #ddd;
   color: white;
   margin: 0;
@@ -17,48 +21,34 @@ const Assign = styled.p`
 `;
 
 const Content = styled.div`
+  // position: ${props => (props.open && props.isAssignList ? "fixed" : "")};
+  // margin-left: ${props => (props.open && props.isAssignList ? "150px" : "0")};
   border-top: none;
-  margin-left: 200px;
-  width: 100%;
+  // width: 100%;
+  z-index: 99999999;
   opacity: ${props => (props.open ? "1" : "0")};
+  // opacity: ${props => (props.open && props.isAssignList ? "0" : "1")};
+  display: ${props => (props.open ? "block" : "none")};
   max-height: ${props => (props.open ? "100%" : "0")};
   overflow: hidden;
-  transition: all 0.1s;
+  transition: all 0.2s;
 
   p {
     margin: 0;
   }
 `;
 
-class Collapse extends React.Component {
-
-  constructor(props) {
-    super(props);
-    this.toggleOpen = this.toggleOpen.bind(this);
-    this.state = {
-      assign: props.assign
-    };
-  }
-
-  toggleOpen() {
-    this.setState({ open: !this.state.open });
-  }
-
-  render() {
-    const ticketsComponents = this.state.assign.tickets.map(ticket => {
-      return <Ticket key={ticket.id} ticket={ticket}></Ticket>
-    });
-    return (
-      <div>
-        <Heading onClick={this.toggleOpen}>
-          <Assign>{this.state.assign.name}</Assign>
-        </Heading>
-        <Content open={this.state.open}>
-          {ticketsComponents}
-        </Content>
-      </div>
-    );
-  }
-}
+const Collapse = ({ isEpicList, isAssignList, data, open, onClick, contentComponents }) => {
+  return (
+    <InnerColappse open={open}>
+      <Heading isEpicList={isEpicList} open={open} onClick={onClick}>
+        <Assign>{data.name}</Assign>
+      </Heading>
+      <Content isAssignList={isAssignList} open={open}>
+        {contentComponents}
+      </Content>
+    </InnerColappse>
+  )
+};
 
 export default Collapse;

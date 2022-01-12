@@ -1,79 +1,47 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import moment from 'moment';
-import AssignList from '../AssignList/AssignList';
+import EpicList from '../EpicList/EpicList';
+import InnerCalendar from './InnerCalendar';
 
-const InnerCalendar = styled.div`
+const Inner = styled.div`
   display: flex;
+  position: absolute;
 `;
 
 const InnerComponents = styled.div`
   display: flex;
-  height: 50px;
-  margin-left: 200px;
+  position: absolute;
+  margin-left: 300px;
 `;
 
-const Month = styled.div`
-  p {
-    margin: 0;
-    font-size: 20px;
-  }
-`;
+const Calendar = () => {
+  const ref = React.createRef();
+  const [epicsOpened, setEpicsOpened] = useState([]);
+  const [assignsOpened, setAssignsOpened] = useState([]);
 
-const Days = styled.div`
-  display: flex;
-`;
+  const [openedRows, setOpenedRows] = useState(0);
 
-const Day = styled.div`
-  border: 1px solid gray;
-  width: 30px;
-  text-align: center;
+  useEffect(() => {
+    const _openedRows = Math.round(ref.current.offsetHeight / 23);
+    setOpenedRows(_openedRows);
+  });
 
-  p {
-    margin: 0;
-    font-size: 14px;
-  }
-`;
-
-const months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-
-class Calendar extends React.Component {
-
-  constructor() {
-    super();
-    this.state = {};
-    this.currentMonthDates = months.map(value => {
-      const month = `${moment().format("Y")}-${months[value - 1]}`;
-      return Array.from({
-        length: moment(month).daysInMonth()
-      }, (x, i) => moment(month).startOf('month').add(i, 'days'));
-    });
+  const onChange = (_epicsOpened) => {
+    setEpicsOpened(_epicsOpened)
   }
 
-  render() {
-    const components = this.currentMonthDates.map((month, i) => {
-      const innerDates =  month.map((date, index)  => {
-        return <Day key={`${index.toString()}`}>
-          { date.format("DD") }
-        </Day>
-      });
-      return <Month key={`Month-${i.toString()}`}>
-        <p key={`MonthTitle${i.toString()}`}>{ month[i].format("MMMM") }</p>
-        <Days key={`Days-${i.toString()}`}>
-          { innerDates }
-        </Days>
-      </Month>;
-    });
-
-    return (
-      <InnerCalendar>
-        <AssignList></AssignList>
-        <InnerComponents>
-          {components}
-        </InnerComponents>
-      </InnerCalendar>
-    );
+  const assignOnChange = (_assignsOpened) => {
+    setAssignsOpened(_assignsOpened)
   }
-}
+  
+  return (
+    <Inner>
+      <EpicList ref={ref} onChange={onChange} assignOnChange={assignOnChange}></EpicList>
+      <InnerComponents>
+        <InnerCalendar openedRows={openedRows}></InnerCalendar>
+      </InnerComponents>
+    </Inner>
+  );
+};
 
 export default Calendar;
