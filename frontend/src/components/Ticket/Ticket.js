@@ -3,6 +3,8 @@ import styled from 'styled-components';
 import moment from 'moment';
 
 const InnerTicket = styled.div`
+  display: ${props => (props.open ? "none" : "block")};
+  z-index: 10;
   width: ${props => (props.widthValue ? `${props.widthValue}px` : "0")};
   margin-left: ${props => (props.marginLeft ? `${props.marginLeft}px` : "0")};
   border: 1px solid;
@@ -27,7 +29,7 @@ const stringToColour = (str) => {
   return colour;
 }
 
-const Ticket = ({ ticket }) => {
+const Ticket = ({ ticket, open }) => {
   const startYear = ticket.startDate.format("Y");
   const startMonth = ticket.startDate.format("M");
   const startDay = ticket.startDate.format("D");
@@ -41,11 +43,7 @@ const Ticket = ({ ticket }) => {
   const endMonth = ticket.endDate.format("M");
   const endDay = ticket.endDate.format("D");
   let widthValue = ((endDay - startDay) * 32) + 32;
-
-
-
   if (endMonth > 1) {
-    console.log(endMonth);
     const days = Array.from(Array(Math.round(endMonth)).keys()).map((value) => {
       const currentMonth = value + 1;
       if (currentMonth != endMonth)  {
@@ -53,12 +51,12 @@ const Ticket = ({ ticket }) => {
       } else {
         return 0;
       }
-    }).reduce((prevValue, nextValue) => prevValue + nextValue, 0);
+    }).reduce((prevValue, currentValue) => prevValue + currentValue, 0);
     widthValue = ((days + (endDay - startDay)) * 32) + 32;
   }
 
   return (
-    <InnerTicket marginLeft={marginLeft} widthValue={widthValue} color={stringToColour(ticket.startDate.format("dddd, MMMM Do YYYY"))}>
+    <InnerTicket open={open} marginLeft={marginLeft} widthValue={widthValue} color={stringToColour(ticket.startDate.format("dddd, MMMM Do YYYY"))}>
       <a href={ticket.href} target="_blank">{ticket.id}</a>
     </InnerTicket>
   );
