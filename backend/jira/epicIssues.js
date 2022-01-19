@@ -1,177 +1,112 @@
-const request = require('../common/requestCommon')
-const config = require('./config')
-const dbClient = require('../common/dbClient')
+import got, {Options} from 'got';
 
 const PLACEHOLDER_BOARDID = '_PLACEHOLDER_BOARDID_'
 const PLACEHOLDER_EPICID = '_PLACEHOLDER_EPICID_'
 const PLACEHOLDER_STARTAT = '_PLACEHOLDER_STARTAT_'
-const FILENAME = 'output/epicIssues.csv'
-const streamWrite = fs.createWriteStream(FILENAME, {autoClose: true})
+const URI = 'rest/agile/1.0/board/' + PLACEHOLDER_BOARDID + '/epic/' + PLACEHOLDER_EPICID + '/issue?startAt=' + PLACEHOLDER_STARTAT;
+const INSERT_ISSUE_STRING = 'INSERT INTO issue(id, key, name, type, status, resolution, resolution_date, sprint_id, epic_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT ON CONSTRAINT issue_pkey DO NOTHING;';
+const INSERT_CLOSED_SPRINT_STRING = 'INSERT INTO closed_sprint(sprint_id, issue_id) VALUES($1, $2) ON CONFLICT ON CONSTRAINT closed_sprint_pkey DO NOTHING;';
+const INSERT_SPRINT_STRING = 'INSERT INTO sprint(id, name, board_id, start_date, complete_date, state) VALUES($1, $2, $3, $4, $5, $6) ON CONFLICT ON CONSTRAINT sprint_pkey DO NOTHING;';
+const SELECT_STRING = "SELECT id, board_id FROM epic";
 
-streamWrite.on('error', function (err) {
-  console.log('######################################################################################## error');
-}).on('finish', function () {
-  console.log('######################################################################################## finish');
-});
-streamWrite.write('epic;id;key;issuetype;status;resolution;resolutionDate;sprintId;sprintName;closedSprintsId;closedSprintsName;closedSprintsCount;closedSprintName;closedSprintStartDate;closedSprintCompleteDate\n')
-
-const REQUEST_FILENAME = 'output/epicIssues_request.json'
-let requestSaved = false
-
-const HTTP_REQUEST = {
-  method: 'GET',
-  uri: '',
-  headers: {
-              'authorization': '',
-              'content-Type': 'application/json'
-          },
-  json: true
-};
-
-const URI = '/rest/agile/1.0/board/' + PLACEHOLDER_BOARDID + '/epic/' + PLACEHOLDER_EPICID + '/issue?startAt=' + PLACEHOLDER_STARTAT;
-
-let accumNbrEpics = 0
-let accumNbrIssues = 0
-let nbrEpics = 0
-
-function log(text) {
-  console.log('epicIssue - ' + text)
+const log = (text) => {
+  console.log('epicIssues - ' + text)
 }
 
-function saveData(context) {
-  log('Saving data to ' + FILENAME + ', board id = ' + context.boardId + ', epic id = '+ context.epicId);
+const getData = async (boardId, epicId, response, query) => {
+  log('getData - boardId = '+ boardId + ', epicId = '+ epicId);
+  let result = null;
 
-  let buffer = '';
+  try {
+    //log('response=' +  JSON.stringify(response))
+    for (let iIndex in response.issues) {
+      let issue = response.issues[iIndex];
 
-  for (index in context.dataBuffer) {
-    buffer += context.dataBuffer[index] + '\n';
-  }
+      //log('issue.key='+issue.key)
+      let sprintId = issue.fields.sprint == null ? null : issue.fields.sprint.id;
+      let resolutionDate = issue.fields.resolutiondate == null ? '' : (new Date(issue.fields.resolutiondate)).toISOString().replace('Z','-0000');
+      let resolution = issue.fields.resolution == null ? '' : issue.fields.resolution.name;
 
-  accumNbrEpics++
-  accumNbrIssues += context.issuesKey.length
+      result = await query({ text: INSERT_ISSUE_STRING, values: [
+        issue.id,
+        issue.key,
+        issue.fields.summary,
+        issue.fields.issuetype.name,
+        issue.fields.status.name,
+        resolution,
+        resolutionDate,
+        sprintId,
+        issue.fields.epic.id
+      ]});
 
-  log('number of epics               = ' + nbrEpics)
-  log('accumulated number of epics   = ' + accumNbrEpics)
-  log('accumulated number of issues  = ' + accumNbrIssues)
+      if (result == null) {
+        continue;
+      }
 
-  streamWrite.write(buffer);
+      // Get closed sprints that bug/task
+      if (typeof issue.fields.closedSprints !== 'undefined' && issue.fields.closedSprints) {
+        for (let csIndex in issue.fields.closedSprints) {
+          let value = issue.fields.closedSprints[csIndex]
+          result = await query({text: INSERT_SPRINT_STRING, values: [value.id, value.name, value.originBoardId, value.startDate, value.completeDate, value.state]})
 
-  context.callerCallback()
-}
-function getData(response, context) {
-  log('getData - boardId = '+ context.boardId + ', epic id = '+ context.epicId);
-  let epicId = 0
+          if (result == null) {
+            break;
+          }
 
-  //console.log('response=' +  JSON.stringify(response))
-  for (iIndex in response.issues) {
-    let issue = response.issues[iIndex]
-
-    //console.log('issue.key='+issue.key)
-    let closedSprintsName = ''
-    let closedSprintsId = ''
-    let closedSprintsCount = 0
-    let sprintName = ''
-    let sprintId = ''
-    let closedSprintName = ''
-    let closedSprintStartDate = ''
-    let closedSprintCompleteDate = ''
-
-    // Get the active sprint
-    if (issue.fields.sprint) {
-      sprintId = issue.fields.sprint.id
-      sprintName = issue.fields.sprint.name
-    }
-
-    // Get closed sprints that bug/task
-    if (typeof issue.fields.closedSprints !== 'undefined' && issue.fields.closedSprints) {
-      for (csIndex in issue.fields.closedSprints) {
-        let closedSprint = issue.fields.closedSprints[csIndex]
-        closedSprintsName = closedSprintsName  + closedSprint.name + ','
-        closedSprintsId = closedSprintsId + closedSprint.id + ','
-        closedSprintsCount++
-
-        if (sprintName == '' && closedSprintName == '') {
-            closedSprintName = closedSprint.name
-            closedSprintStartDate = closedSprint.startDate
-            closedSprintCompleteDate = closedSprint.completeDate
+          await query({text: INSERT_CLOSED_SPRINT_STRING, values: [issue.fields.closedSprints[csIndex].id, issue.id]});
         }
       }
     }
-
-    closedSprintsId = closedSprintsId.replace(/,$/, '')
-    closedSprintsName = closedSprintsName.replace(/,$/, '')
-    resolutionDate = issue.fields.resolutiondate == null ? '' : (new Date(issue.fields.resolutiondate)).toISOString().replace('Z','-0000')
-    resolution = issue.fields.resolution == null ? '' : issue.fields.resolution.name
-
-    context.dataBuffer.push(
-      issue.fields.epic.key + ';' +
-      issue.id + ';' +
-      issue.key + ';' +
-      issue.fields.issuetype.name + ';' +
-      issue.fields.status.name + ';' +
-      resolution + ';' +
-      resolutionDate + ';' +
-      sprintId + ';' +
-      sprintName + ';' +
-      closedSprintsId + ';' +
-      closedSprintsName + ';' +
-      closedSprintsCount + ';' +
-      closedSprintName + ';' +
-      closedSprintStartDate + ';' +
-      closedSprintCompleteDate
-
-    )
-
-    context.issuesKey.push(issue.key)
+  } catch (error) {
+    log(error);
   }
 }
 
-function handleResponse(response, context){
-  log('handleResponse - boardId = '+ context.boardId);
 
-  getData(response, context);
+const request = async (boardId, epicId, options, startAt, query) => {
+  log('request - boardId = ' + boardId + ", epicId = " + epicId);
+  try {
+    const response = await got(URI.replace(PLACEHOLDER_BOARDID, boardId).replace(PLACEHOLDER_EPICID, epicId).replace(PLACEHOLDER_STARTAT, startAt), undefined, options).json();
+    await getData(boardId, epicId, response, query)
 
-  if (response.total > response.startAt + response.maxResults) {
-    context.httpRequest.uri = context.jiraUrl + URI.replace(PLACEHOLDER_BOARDID, context.boardId).replace(PLACEHOLDER_EPICID, context.epicId).replace(PLACEHOLDER_STARTAT, response.startAt + response.maxResults);
-    request.request(context);
-  } else {
-    saveData(context);
-  }
-}
-
-function getEpicIssues(jiraUrl, auth, boardId, epicsId, callerCbk) {
-  log('##### Getting Epics issues #####');
-
-  nbrEpics += epicsId.length
-
-  for (index in epicsId) {
-    log('Getting the epics issues. Board Id = ' + boardId);
-    log('Getting the epics issues. Epic Id = ' + epicsId[index]);
-
-    let context = {
-      httpRequest : Object.assign({}, HTTP_REQUEST),
-      handleResponse : handleResponse,
-      dataBuffer : [],
-      callerCallback : callerCbk,
-      boardId : boardId,
-      epicId : epicsId[index],
-      issuesKey : [],
-      jiraUrl : jiraUrl
+    if (response.total > response.startAt + response.maxResults) {
+      await request(boardId, epicId, options, response.startAt + response.maxResults, query);
     }
-
-    context.httpRequest.uri = jiraUrl + URI.replace(PLACEHOLDER_BOARDID, boardId).replace(PLACEHOLDER_EPICID, epicsId[index]).replace(PLACEHOLDER_STARTAT, '0')
-    context.httpRequest.headers.authorization = auth
-
-    if (!requestSaved) {
-      const streamWriteRequest = fs.createWriteStream(REQUEST_FILENAME, {autoClose: true})
-      streamWriteRequest.write(JSON.stringify(context.httpRequest))
-      requestSaved = true
-    }
-
-    request.request(context)
+  } catch (error) {
+    log("################################## ERROR")
+    log("URI = " + URI.replace(PLACEHOLDER_BOARDID, boardId).replace(PLACEHOLDER_EPICID, epicId).replace(PLACEHOLDER_STARTAT, startAt))
+    log("options = " + JSON.stringify(options))
+    log("error = " + JSON.stringify(error))
+    log("stack = " + error.stack);
+    log("################################## ERROR")
   }
 }
 
-module.exports = {
-  getEpicIssues
+const GetEpicIssues = async (getConfig, query) => {
+  log('##### GetEpicIssues #####');
+
+  let conf = getConfig();
+  let result = await query(SELECT_STRING);
+
+  if (result != null) {
+    for (const idx in result.rows) {
+      const epicId = result.rows[idx].id;
+      const boardId = result.rows[idx].board_id;
+      const options = new Options({
+        prefixUrl: conf.jiraUrl,
+        headers: {
+          authorization: conf.jiraAuth
+        }
+      });
+
+      if (boardId == null || epicId == null) {
+        log(" WARN - boardId = " + boardId + ", epicId = " + epicId)
+        continue;
+      }
+
+      await request(boardId, epicId, options, 0, query, conf);
+    }
+  }
 }
+
+export {GetEpicIssues}

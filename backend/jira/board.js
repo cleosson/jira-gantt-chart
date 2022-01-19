@@ -25,7 +25,12 @@ const GetBoard = async (boardId, getConfig, query) => {
     const response = await got(URI.replace(PLACEHOLDER_BOARDID, boardId), undefined, options).json();
     await query({text: INSERT_STRING, values: [response.id, response.name]})
   } catch (error) {
-    log(error);
+    log("################################## ERROR")
+    log("URI = " + URI.replace(PLACEHOLDER_BOARDID, boardId))
+    log("options = " + JSON.stringify(options))
+    log("error = " + JSON.stringify(error))
+    log("stack = " + error.stack);
+    log("################################## ERROR")
   }
 }
 

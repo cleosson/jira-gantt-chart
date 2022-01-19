@@ -29,7 +29,12 @@ const requestGetEpics = async (boardId, options, startAt, query) => {
       await requestGetEpics(boardId, options, response.startAt + response.maxResults, query);
     }
   } catch (error) {
-    log(error);
+    log("################################## ERROR")
+    log("URI = " + URI_BOARD.replace(PLACEHOLDER_BOARDID, boardId).replace(PLACEHOLDER_STARTAT, startAt))
+    log("options = " + JSON.stringify(options))
+    log("error = " + JSON.stringify(error))
+    log("stack = " + error.stack);
+    log("################################## ERROR")
   }
 }
 
@@ -69,7 +74,12 @@ const requestGetEpicParent = async (id, options, query) => {
       }
     }
   } catch (error) {
-    log(error);
+    log("################################## ERROR")
+    log("URI = " + URI_EPIC.replace(PLACEHOLDER_ISSUEID, id))
+    log("options = " + JSON.stringify(options))
+    log("error = " + JSON.stringify(error))
+    log("stack = " + error.stack);
+    log("################################## ERROR")
   }
 }
 

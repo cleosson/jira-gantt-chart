@@ -14,7 +14,11 @@ const Query = async (query) => {
   try {
     return await client.query(query);
   } catch (error) {
-    console.error(error.stack);
+    console.log("################################## ERROR")
+    console.log("query = " + JSON.stringify(query))
+    console.log("error = " + JSON.stringify(error))
+    console.log("stack = " + error.stack);
+    console.log("################################## ERROR")
     return null;
   } finally {
     client.release();

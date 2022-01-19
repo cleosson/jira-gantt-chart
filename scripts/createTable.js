@@ -26,6 +26,7 @@ const executeSQL = async (queries) => {
 const sqls = [
   `
     DROP TABLE IF EXISTS
+      closed_sprint,
       issue,
       epic,
       sprint,
@@ -34,14 +35,14 @@ const sqls = [
   `
     CREATE TABLE IF NOT EXISTS "board" (
     "id" INT,
-    "name" VARCHAR(100) NOT NULL,
+    "name" VARCHAR(200) NOT NULL,
     PRIMARY KEY ("id"));
   `,
   `
     CREATE TABLE IF NOT EXISTS "sprint" (
     "id" INT,
     "board_id" INT REFERENCES board (id),
-    "name" VARCHAR(100) NOT NULL,
+    "name" VARCHAR(200) NOT NULL,
     "start_date" VARCHAR(100) NOT NULL,
     "complete_date" VARCHAR(100) NOT NULL,
     "state" VARCHAR(100) NOT NULL,
@@ -50,7 +51,7 @@ const sqls = [
   `
     CREATE TABLE IF NOT EXISTS "epic" (
     "id" INT,
-    "name" VARCHAR(100) NOT NULL,
+    "name" VARCHAR(200) NOT NULL,
     "key" VARCHAR(100) NOT NULL,
     "parent_id" INT REFERENCES epic (id),
     "board_id" INT REFERENCES board (id),
@@ -59,15 +60,27 @@ const sqls = [
   `
     CREATE TABLE IF NOT EXISTS "issue" (
     "id" INT,
-    "name" VARCHAR(100) NOT NULL,
+    "name" VARCHAR(200) NOT NULL,
     "key" VARCHAR(100) NOT NULL,
-    "done" BOOLEAN NOT NULL,
-    "board_id"  INT REFERENCES board (id),
+    "type" VARCHAR(100) NOT NULL,
+    "status" VARCHAR(100),
+    "resolution" VARCHAR(100),
+    "resolution_date" VARCHAR(100),
+    "epic_id"  INT REFERENCES epic (id),
+    "sprint_id"  INT REFERENCES sprint (id),
+    PRIMARY KEY ("id"));
+  `,
+  `
+    CREATE TABLE IF NOT EXISTS "closed_sprint" (
+    "id" SERIAL,
+    "sprint_id" INT REFERENCES sprint (id) NOT NULL,
+    "issue_id" INT REFERENCES issue (id) NOT NULL,
     PRIMARY KEY ("id"));
   `
+
 ];
 
-executeSQL(sqls).then(result => {
+ executeSQL(sqls).then(result => {
   if (result) {
     console.log('Tables created');
   }

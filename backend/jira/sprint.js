@@ -19,7 +19,7 @@ const getData = async (boardId, response, query, conf) => {
     let completeDate = typeof value.completeDate == 'undefined' ? '' : (new Date(value.completeDate)).toISOString().replace('Z','-0000')
     let startDate = typeof value.startDate == 'undefined' ? '' : (new Date(value.startDate)).toISOString().replace('Z','-0000')
 
-    if (conf.jiraStartDate < startDate) {
+    if (conf.jiraStartDate < startDate || startDate == '') {
       // log('Geting Sprint name=' + value.name + ', id=' + value.id + ', startDate=' + startDate + ', minimum startDate=' + conf.jiraStartDate + ", board id=" + boardId)
       await query({text: INSERT_STRING, values: [value.id, value.name, boardId, startDate, completeDate, value.state]})
     } else {
@@ -38,9 +38,15 @@ const request = async (boardId, options, startAt, query, conf) => {
       await request(boardId, options, response.startAt + response.maxResults, query, conf);
     }
   } catch (error) {
-    log(error);
+    log("################################## ERROR")
+    log("URI = " + URI.replace(PLACEHOLDER_BOARDID, boardId).replace(PLACEHOLDER_STARTAT, startAt))
+    log("options = " + JSON.stringify(options))
+    log("error = " + JSON.stringify(error))
+    log("stack = " + error.stack);
+    log("################################## ERROR")
   }
 }
+
 const GetSprints = async (getConfig, query) => {
   log('##### GetSprints #####');
 
