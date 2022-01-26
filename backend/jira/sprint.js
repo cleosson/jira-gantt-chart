@@ -4,7 +4,9 @@ const PLACEHOLDER_BOARDID = '_PLACEHOLDER_BOARDID_'
 const PLACEHOLDER_STARTAT = '_PLACEHOLDER_STARTAT_'
 const URI = 'rest/agile/1.0/board/' + PLACEHOLDER_BOARDID + '/sprint?startAt=' + PLACEHOLDER_STARTAT;
 const SELECT_STRING = "SELECT id FROM board";
-const INSERT_STRING = 'INSERT INTO sprint(id, name, board_id, start_date, complete_date, state) VALUES($1, $2, $3, $4, $5, $6) ON CONFLICT ON CONSTRAINT sprint_pkey DO NOTHING;';
+const INSERT_STRING = 'INSERT INTO sprint(id, name, board_id, start_date, complete_date, state) VALUES($1, $2, $3, $4, $5, $6) ' +
+                      'ON CONFLICT ON CONSTRAINT sprint_pkey DO UPDATE SET name = excluded.name, board_id = excluded.board_id, ' +
+                      'start_date = excluded.start_date, complete_date = excluded.complete_date, state = excluded.state;';
 
 
 const log = (text) => {
@@ -44,6 +46,7 @@ const request = async (boardId, options, startAt, query, conf) => {
     log("error = " + JSON.stringify(error))
     log("stack = " + error.stack);
     log("################################## ERROR")
+    throw error;
   }
 }
 

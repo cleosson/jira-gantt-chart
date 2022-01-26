@@ -9,4 +9,4 @@ const GetConfig = () => {
   return config;
 }
 
-export {GetConfig};
+export {GetConfig}

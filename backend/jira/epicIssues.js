@@ -4,9 +4,15 @@ const PLACEHOLDER_BOARDID = '_PLACEHOLDER_BOARDID_'
 const PLACEHOLDER_EPICID = '_PLACEHOLDER_EPICID_'
 const PLACEHOLDER_STARTAT = '_PLACEHOLDER_STARTAT_'
 const URI = 'rest/agile/1.0/board/' + PLACEHOLDER_BOARDID + '/epic/' + PLACEHOLDER_EPICID + '/issue?startAt=' + PLACEHOLDER_STARTAT;
-const INSERT_ISSUE_STRING = 'INSERT INTO issue(id, key, name, type, status, resolution, resolution_date, sprint_id, epic_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT ON CONSTRAINT issue_pkey DO NOTHING;';
+const INSERT_ISSUE_STRING = 'INSERT INTO issue(id, key, name, type, status, resolution, resolution_date, sprint_id, epic_id) ' +
+                            'VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT ON CONSTRAINT issue_pkey DO ' +
+                            'UPDATE SET key = excluded.key, name = excluded.name, type = excluded.type, status = excluded.status, ' +
+                            'resolution = excluded.resolution, resolution_date = excluded.resolution_date, sprint_id = excluded.sprint_id, ' +
+                            'epic_id = excluded.epic_id;';
 const INSERT_CLOSED_SPRINT_STRING = 'INSERT INTO closed_sprint(sprint_id, issue_id) VALUES($1, $2) ON CONFLICT ON CONSTRAINT closed_sprint_pkey DO NOTHING;';
-const INSERT_SPRINT_STRING = 'INSERT INTO sprint(id, name, board_id, start_date, complete_date, state) VALUES($1, $2, $3, $4, $5, $6) ON CONFLICT ON CONSTRAINT sprint_pkey DO NOTHING;';
+const INSERT_SPRINT_STRING = 'INSERT INTO sprint(id, name, board_id, start_date, complete_date, state) VALUES($1, $2, $3, $4, $5, $6) ' +
+                              'ON CONFLICT ON CONSTRAINT sprint_pkey DO UPDATE SET name = excluded.name, board_id = excluded.board_id, ' +
+                              'start_date = excluded.start_date, complete_date = excluded.complete_date, state = excluded.state;';
 const SELECT_STRING = "SELECT id, board_id FROM epic";
 
 const log = (text) => {
@@ -79,6 +85,7 @@ const request = async (boardId, epicId, options, startAt, query) => {
     log("error = " + JSON.stringify(error))
     log("stack = " + error.stack);
     log("################################## ERROR")
+    throw error;
   }
 }
 

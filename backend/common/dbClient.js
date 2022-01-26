@@ -19,7 +19,7 @@ const Query = async (query) => {
     console.log("error = " + JSON.stringify(error))
     console.log("stack = " + error.stack);
     console.log("################################## ERROR")
-    return null;
+    throw error;
   } finally {
     client.release();
   }

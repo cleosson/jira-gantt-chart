@@ -7,10 +7,12 @@ const URI_BOARD = 'rest/agile/1.0/board/' + PLACEHOLDER_BOARDID + '/epic?startAt
 const SELECT_BOARDS_STRING = "SELECT id FROM board";
 const URI_EPIC = 'rest/api/3/issue/' + PLACEHOLDER_ISSUEID;
 const SELECT_EPICS_STRING = "SELECT id, key, parent_id FROM epic"
-const INSERT_EPIC_STRING = 'INSERT INTO epic(id, name, key, board_id) VALUES($1, $2, $3, $4) ON CONFLICT ON CONSTRAINT epic_pkey DO NOTHING;';
+const INSERT_EPIC_STRING = 'INSERT INTO epic(id, name, key, board_id) VALUES($1, $2, $3, $4) ON CONFLICT ON CONSTRAINT epic_pkey DO ' +
+                            'UPDATE SET name = excluded.name, key = excluded.key;';
 const UPDATE_EPIC_PARENT_STRING = 'UPDATE epic SET parent_id = $1 WHERE id = $2'
 const SELECT_EPIC_STRING = "SELECT id, key, parent_id FROM epic WHERE id = $1"
-const INSERT_PARENT_STRING = 'INSERT INTO epic(id, name, key) VALUES($1, $2, $3)';
+const INSERT_PARENT_STRING = 'INSERT INTO epic(id, name, key) VALUES($1, $2, $3) ON CONFLICT ON CONSTRAINT epic_pkey DO ' +
+                              'UPDATE SET name = excluded.name, key = excluded.key;';
 
 const log = (text) => {
   console.log('epic - ' + text)
@@ -35,6 +37,7 @@ const requestGetEpics = async (boardId, options, startAt, query) => {
     log("error = " + JSON.stringify(error))
     log("stack = " + error.stack);
     log("################################## ERROR")
+    throw error;
   }
 }
 
@@ -80,6 +83,7 @@ const requestGetEpicParent = async (id, options, query) => {
     log("error = " + JSON.stringify(error))
     log("stack = " + error.stack);
     log("################################## ERROR")
+    throw error;
   }
 }
 

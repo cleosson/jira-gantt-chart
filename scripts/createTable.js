@@ -43,8 +43,8 @@ const sqls = [
     "id" INT,
     "board_id" INT REFERENCES board (id),
     "name" VARCHAR(200) NOT NULL,
-    "start_date" VARCHAR(100) NOT NULL,
-    "complete_date" VARCHAR(100) NOT NULL,
+    "start_date" VARCHAR(100),
+    "complete_date" VARCHAR(100),
     "state" VARCHAR(100) NOT NULL,
     PRIMARY KEY ("id"));
   `,
@@ -75,9 +75,8 @@ const sqls = [
     "id" SERIAL,
     "sprint_id" INT REFERENCES sprint (id) NOT NULL,
     "issue_id" INT REFERENCES issue (id) NOT NULL,
-    PRIMARY KEY ("id"));
+    PRIMARY KEY ("sprint_id", "issue_id"));
   `
-
 ];
 
  executeSQL(sqls).then(result => {

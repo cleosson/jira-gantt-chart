@@ -1,18 +1,24 @@
-import {GetBoard} from './jira/board.js'
-import {GetEpics, GetEpicsParent} from './jira/epic.js'
-import {GetEpicIssues} from './jira/epicIssues.js'
-import {GetSprints} from './jira/sprint.js'
-import {GetConfig} from './common/config.js'
-import {Query} from './common/dbClient.js'
+import express from 'express';
+import {graphqlHTTP} from 'express-graphql';
+import {graphql, GraphQLSchema, GraphQLObjectType, GraphQLString, GraphQLInt, GraphQLBoolean} from  'graphql';
+import {GetFieldConfigMap} from './route.js'
 
+const schema = new GraphQLSchema({
+  query: new GraphQLObjectType({
+    name: 'RootQueryType',
+    fields: GetFieldConfigMap(),
+  }),
+});
 
-const main = async () => {
-    await GetBoard(GetConfig().jiraBoardId, GetConfig, Query);
-    await GetEpics(GetConfig, Query);
-    await GetEpicsParent(GetConfig, Query);
-    await GetSprints(GetConfig, Query);
-    await GetEpicIssues(GetConfig, Query);
-}
+const server = () => {
+  // Create an express server and a GraphQL endpoint
+  var server = express();
+  server.use('/graphql', graphqlHTTP({
+    schema: schema,
+    // rootValue: root,
+    graphiql: true
+  }));
+  server.listen(4000, () => console.log('Express GraphQL Server Now Running On localhost:4000/graphql'));
+};
 
-main();
-
+server();
