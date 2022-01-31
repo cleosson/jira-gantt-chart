@@ -1,6 +1,6 @@
 import express from 'express';
 import {graphqlHTTP} from 'express-graphql';
-import {graphql, GraphQLSchema, GraphQLObjectType, GraphQLString, GraphQLInt, GraphQLBoolean} from  'graphql';
+import {GraphQLSchema, GraphQLObjectType} from  'graphql';
 import {GetFieldConfigMap} from './route.js'
 
 const schema = new GraphQLSchema({
