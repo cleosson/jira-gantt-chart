@@ -18,7 +18,6 @@ const fetchIssuesAsync = async () => {
   status = STATUS_LOADING;
 
   try {
-
     await GetBoard(GetConfig().jiraBoardId, GetConfig, Query);
     await GetEpics(GetConfig, Query);
     await GetEpicsParent(GetConfig, Query);

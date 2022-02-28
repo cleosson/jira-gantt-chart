@@ -4,15 +4,15 @@ const PLACEHOLDER_BOARDID = '_PLACEHOLDER_BOARDID_'
 const PLACEHOLDER_EPICID = '_PLACEHOLDER_EPICID_'
 const PLACEHOLDER_STARTAT = '_PLACEHOLDER_STARTAT_'
 const URI = 'rest/agile/1.0/board/' + PLACEHOLDER_BOARDID + '/epic/' + PLACEHOLDER_EPICID + '/issue?startAt=' + PLACEHOLDER_STARTAT;
-const INSERT_ISSUE_STRING = 'INSERT INTO issue(id, key, name, type, status, resolution, resolution_date, sprint_id, epic_id) ' +
-                            'VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT ON CONSTRAINT issue_pkey DO ' +
+const INSERT_ISSUE_STRING = 'INSERT INTO issue(id, key, name, type, status, reporter, assignee, resolution, resolution_date, sprint_id, epic_id) ' +
+                            'VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT ON CONSTRAINT issue_pkey DO ' +
                             'UPDATE SET key = excluded.key, name = excluded.name, type = excluded.type, status = excluded.status, ' +
                             'resolution = excluded.resolution, resolution_date = excluded.resolution_date, sprint_id = excluded.sprint_id, ' +
                             'epic_id = excluded.epic_id;';
 const INSERT_CLOSED_SPRINT_STRING = 'INSERT INTO closed_sprint(sprint_id, issue_id) VALUES($1, $2) ON CONFLICT ON CONSTRAINT closed_sprint_pkey DO NOTHING;';
-const INSERT_SPRINT_STRING = 'INSERT INTO sprint(id, name, board_id, start_date, complete_date, state) VALUES($1, $2, $3, $4, $5, $6) ' +
+const INSERT_SPRINT_STRING = 'INSERT INTO sprint(id, name, board_id, start_date, end_date, complete_date, state) VALUES($1, $2, $3, $4, $5, $6, $7) ' +
                               'ON CONFLICT ON CONSTRAINT sprint_pkey DO UPDATE SET name = excluded.name, board_id = excluded.board_id, ' +
-                              'start_date = excluded.start_date, complete_date = excluded.complete_date, state = excluded.state;';
+                              'start_date = excluded.start_date, end_date = excluded.end_date, complete_date = excluded.complete_date, state = excluded.state;';
 const SELECT_STRING = "SELECT id, board_id FROM epic";
 
 const log = (text) => {
@@ -24,7 +24,7 @@ const getData = async (boardId, epicId, response, query) => {
   let result = null;
 
   try {
-    //log('response=' +  JSON.stringify(response))
+    // log('response=' +  JSON.stringify(response))
     for (let iIndex in response.issues) {
       let issue = response.issues[iIndex];
 
@@ -39,6 +39,8 @@ const getData = async (boardId, epicId, response, query) => {
         issue.fields.summary,
         issue.fields.issuetype.name,
         issue.fields.status.name,
+        issue.fields.reporter.displayName,
+        issue.fields.assignee.displayName,
         resolution,
         resolutionDate,
         sprintId,
@@ -53,7 +55,7 @@ const getData = async (boardId, epicId, response, query) => {
       if (typeof issue.fields.closedSprints !== 'undefined' && issue.fields.closedSprints) {
         for (let csIndex in issue.fields.closedSprints) {
           let value = issue.fields.closedSprints[csIndex]
-          result = await query({text: INSERT_SPRINT_STRING, values: [value.id, value.name, value.originBoardId, value.startDate, value.completeDate, value.state]})
+          result = await query({text: INSERT_SPRINT_STRING, values: [value.id, value.name, value.originBoardId, value.startDate, value.endDate, value.completeDate, value.state]})
 
           if (result == null) {
             break;

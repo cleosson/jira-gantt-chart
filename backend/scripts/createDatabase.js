@@ -1,12 +1,14 @@
-const { Client } = require('pg');
+import 'dotenv/config';
+import pg from 'pg';
 
-const client = new Client({
+const config = {
   host: process.env.POSTGRES_HOST,
   user: process.env.POSTGRES_USER,
   password: process.env.POSTGRES_PASSWORD,
   port: parseInt(process.env.POSTGRES_PORT, 10),
-});
+};
 
+const client = new pg.Client(config);
 const executeSQL = async (query) => {
   try {
     await client.connect();     // gets connection
@@ -20,10 +22,10 @@ const executeSQL = async (query) => {
   }
 };
 
-const sql = "DROP DATABASE IF EXISTS " + process.env.POSTGRES_DATABASE
+const sql = "CREATE DATABASE " + process.env.POSTGRES_DATABASE
 
 executeSQL(sql).then(result => {
   if (result) {
-    console.log('Database dropped');
+    console.log('Database created');
   }
 });

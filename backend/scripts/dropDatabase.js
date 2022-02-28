@@ -1,6 +1,7 @@
-const { Client } = require('pg');
+import 'dotenv/config';
+import pg from 'pg';
 
-const client = new Client({
+const client = new pg.Client({
   host: process.env.POSTGRES_HOST,
   user: process.env.POSTGRES_USER,
   password: process.env.POSTGRES_PASSWORD,
@@ -20,10 +21,10 @@ const executeSQL = async (query) => {
   }
 };
 
-const sql = "CREATE DATABASE " + process.env.POSTGRES_DATABASE
+const sql = "DROP DATABASE IF EXISTS " + process.env.POSTGRES_DATABASE
 
 executeSQL(sql).then(result => {
   if (result) {
-    console.log('Database created');
+    console.log('Database dropped');
   }
 });

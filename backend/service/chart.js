@@ -7,6 +7,11 @@ const PLACEHOLDER_BOARDID = '_PLACEHOLDER_BOARDID_'
 const URI = 'rest/agile/1.0/board/' + PLACEHOLDER_BOARDID
 const SELECT_ISSUE_INNER_JOIN = 'SELECT * FROM issue INNER JOIN closed_sprint ON closed_sprint.issue_id = issue.id WHERE issue.id=$1';
 const SELECT_ISSUE = 'SELECT * FROM issue WHERE issue.epic_id=$1';
+
+
+const SELECT_ISSUE_BY_ASSIGNEE='SELECT * FROM issue WHERE issue.epic_id=$1 AND issue.assignee=$2';
+
+const SELECT_ASSIGNEES = 'SELECT issue.assignee FROM issue WHERE issue.epic_id=$1 GROUP BY issue.assignee';
 const SELECT_EPIC = 'SELECT * FROM epic WHERE epic.board_id=$1';
 const SELECT_SPRINT = 'SELECT * FROM sprint WHERE sprint.board_id=$1';
 
@@ -37,12 +42,56 @@ const getIssues = async (epicId) => {
         name: issues.rows[idx].name,
         type: issues.rows[idx].type,
         status: issues.rows[idx].status,
+        reporter: issues.rows[idx].reporter,
+        assignee: issues.rows[idx].assignee,
         resolution: issues.rows[idx].resolution,
         resolutionDate: issues.rows[idx].resolution_date,
-        closedSprints: closedSprintsArray});
+        sprintId: issues.rows[idx].sprint_id,
+        closedSprints: closedSprintsArray
+      });
     }
   }
   return issuesArray;
+}
+
+const getIssuesByAssignee = async (epicId, assignee) => {
+  let issuesArray = [];
+  let issues = await Query({text: SELECT_ISSUE_BY_ASSIGNEE, values: [epicId, assignee]})
+  if (issues != null) {
+    for (const idx in issues.rows) {
+      let closedSprintsArray = await getClosedSprints(issues.rows[idx].id);
+      issuesArray.push({
+        id: issues.rows[idx].id,
+        key: issues.rows[idx].key,
+        name: issues.rows[idx].name,
+        type: issues.rows[idx].type,
+        status: issues.rows[idx].status,
+        reporter: issues.rows[idx].reporter,
+        assignee: issues.rows[idx].assignee,
+        resolution: issues.rows[idx].resolution,
+        resolutionDate: issues.rows[idx].resolution_date,
+        sprintId: issues.rows[idx].sprint_id,
+        closedSprints: closedSprintsArray
+      });
+    }
+  }
+  return issuesArray;
+}
+
+const getAssignees = async (epicId) => {
+  let assigneesArray = [];
+  let assignees = await Query({text: SELECT_ASSIGNEES, values: [epicId]})
+  if (assignees != null) {
+    for (const idx in assignees.rows) {
+      let issues = await getIssuesByAssignee(epicId, assignees.rows[idx].assignee)
+
+      assigneesArray.push({
+        name: assignees.rows[idx].assignee,
+        issues
+      });
+    }
+  }
+  return assigneesArray;
 }
 
 const getEpics = async (boardId) => {
@@ -51,10 +100,12 @@ const getEpics = async (boardId) => {
   if (epics != null) {
     for (const idx in epics.rows) {
       let issuesArray = await getIssues(epics.rows[idx].id);
+      let assigneesArray = await getAssignees(epics.rows[idx].id);
       epicsArray.push({
         id: epics.rows[idx].id,
         key: epics.rows[idx].key,
         name: epics.rows[idx].name,
+        assignees: assigneesArray,
         issues: issuesArray});
     }
   }
@@ -70,6 +121,7 @@ const getSprints = async (boardId) => {
         id: sprints.rows[idx].id,
         name: sprints.rows[idx].name,
         startDate: sprints.rows[idx].start_date,
+        endDate: sprints.rows[idx].end_date,
         completeDate: sprints.rows[idx].complete_date,
         state: sprints.rows[idx].state
       });

@@ -15,6 +15,12 @@ const Issue = new GraphQLObjectType({
       type: {
         type: GraphQLString
       },
+      reporter: {
+        type: GraphQLString
+      },
+      assignee: {
+        type: GraphQLString
+      },
       resolution: {
         type: GraphQLString
       },
@@ -26,8 +32,23 @@ const Issue = new GraphQLObjectType({
       },
       closedSprints: {
         type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(GraphQLInt)))
-      }
+      },
+      sprintId: {
+        type: GraphQLInt
+      },
   }
+});
+
+const Assignees = new GraphQLObjectType({
+  name: 'Assignees',
+  fields:  {
+    name: {
+      type: GraphQLString
+    },
+    issues: {
+      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(Issue)))
+    }
+}
 });
 
 const Epic = new GraphQLObjectType({
@@ -44,6 +65,9 @@ const Epic = new GraphQLObjectType({
       },
       issues: {
         type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(Issue)))
+      },
+      assignees: {
+        type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(Assignees)))
       }
   }
 });
@@ -58,6 +82,9 @@ const Sprint = new GraphQLObjectType({
         type: GraphQLString
       },
       startDate: {
+        type: GraphQLString
+      },
+      endDate: {
         type: GraphQLString
       },
       completeDate: {

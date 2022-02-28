@@ -2,7 +2,10 @@ import React from "react";
 import styled from 'styled-components';
 import moment from 'moment';
 
+window.moment = moment;
+
 const InnerTicket = styled.div`
+  position: absolute;
   display: ${props => (props.open ? "none" : "block")};
   z-index: 10;
   width: ${props => (props.widthValue ? `${props.widthValue}px` : "0")};
@@ -29,35 +32,20 @@ const stringToColour = (str) => {
   return colour;
 }
 
-const Ticket = ({ ticket, open }) => {
-  const startYear = ticket.startDate.format("Y");
-  const startMonth = ticket.startDate.format("M");
-  const startDay = ticket.startDate.format("D");
-  let marginLeft = (startDay * 32) - 32;
+const Ticket = ({ ticket }) => {
+  const startDay = +ticket.startDate.format("D");
+  const marginLeft = (startDay * 32);
 
-  if (startMonth > 1) {
-    marginLeft = (moment(`${startYear}-${startMonth}`).daysInMonth() + startDay) * 32;
-  }
-
-  const endYear = ticket.endDate.format("Y");
-  const endMonth = ticket.endDate.format("M");
-  const endDay = ticket.endDate.format("D");
+  const endMonth = +ticket.endDate.format("M");
+  const endDay = +ticket.endDate.format("D");
   let widthValue = ((endDay - startDay) * 32) + 32;
   if (endMonth > 1) {
-    const days = Array.from(Array(Math.round(endMonth)).keys()).map((value) => {
-      const currentMonth = value + 1;
-      if (currentMonth != endMonth)  {
-        return moment(`${endYear}-${currentMonth}`).daysInMonth()
-      } else {
-        return 0;
-      }
-    }).reduce((prevValue, currentValue) => prevValue + currentValue, 0);
-    widthValue = ((days + (endDay - startDay)) * 32) + 32;
+    const days = ticket.endDate.diff(ticket.startDate, 'days');
+    widthValue = (days * 32) + 32;
   }
-
   return (
-    <InnerTicket open={open} marginLeft={marginLeft} widthValue={widthValue} color={stringToColour(ticket.startDate.format("dddd, MMMM Do YYYY"))}>
-      <a href={ticket.href} target="_blank">{ticket.id}</a>
+    <InnerTicket open={ticket.opened} marginLeft={marginLeft} widthValue={widthValue} color={stringToColour(ticket.startDate.format("dddd, MMMM Do YYYY"))}>
+      <a href={ticket.href} target="_blank">{ticket.key} {ticket.name}</a>
     </InnerTicket>
   );
 };

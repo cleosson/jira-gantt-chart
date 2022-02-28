@@ -1,6 +1,7 @@
-const { Client } = require('pg');
+import 'dotenv/config';
+import pg from 'pg';
 
-const client = new Client({
+const client = new pg.Client({
   host: process.env.POSTGRES_HOST,
   user: process.env.POSTGRES_USER,
   database: process.env.POSTGRES_DATABASE,
@@ -44,6 +45,7 @@ const sqls = [
     "board_id" INT REFERENCES board (id),
     "name" VARCHAR(200) NOT NULL,
     "start_date" VARCHAR(100),
+    "end_date" VARCHAR(100),
     "complete_date" VARCHAR(100),
     "state" VARCHAR(100) NOT NULL,
     PRIMARY KEY ("id"));
@@ -64,6 +66,8 @@ const sqls = [
     "key" VARCHAR(100) NOT NULL,
     "type" VARCHAR(100) NOT NULL,
     "status" VARCHAR(100),
+    "reporter" VARCHAR(100),
+    "assignee" VARCHAR(100),
     "resolution" VARCHAR(100),
     "resolution_date" VARCHAR(100),
     "epic_id"  INT REFERENCES epic (id),

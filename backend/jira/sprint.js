@@ -4,9 +4,9 @@ const PLACEHOLDER_BOARDID = '_PLACEHOLDER_BOARDID_'
 const PLACEHOLDER_STARTAT = '_PLACEHOLDER_STARTAT_'
 const URI = 'rest/agile/1.0/board/' + PLACEHOLDER_BOARDID + '/sprint?startAt=' + PLACEHOLDER_STARTAT;
 const SELECT_STRING = "SELECT id FROM board";
-const INSERT_STRING = 'INSERT INTO sprint(id, name, board_id, start_date, complete_date, state) VALUES($1, $2, $3, $4, $5, $6) ' +
+const INSERT_STRING = 'INSERT INTO sprint(id, name, board_id, start_date, end_date, complete_date, state) VALUES($1, $2, $3, $4, $5, $6, $7) ' +
                       'ON CONFLICT ON CONSTRAINT sprint_pkey DO UPDATE SET name = excluded.name, board_id = excluded.board_id, ' +
-                      'start_date = excluded.start_date, complete_date = excluded.complete_date, state = excluded.state;';
+                      'start_date = excluded.start_date, end_date = excluded.end_date, complete_date = excluded.complete_date, state = excluded.state;';
 
 
 const log = (text) => {
@@ -20,10 +20,11 @@ const getData = async (boardId, response, query, conf) => {
     let value = response.values[vIndex]
     let completeDate = typeof value.completeDate == 'undefined' ? '' : (new Date(value.completeDate)).toISOString().replace('Z','-0000')
     let startDate = typeof value.startDate == 'undefined' ? '' : (new Date(value.startDate)).toISOString().replace('Z','-0000')
+    let endDate = typeof value.endDate == 'undefined' ? '' : (new Date(value.endDate)).toISOString().replace('Z','-0000')
 
     if (conf.jiraStartDate < startDate || startDate == '') {
       // log('Geting Sprint name=' + value.name + ', id=' + value.id + ', startDate=' + startDate + ', minimum startDate=' + conf.jiraStartDate + ", board id=" + boardId)
-      await query({text: INSERT_STRING, values: [value.id, value.name, boardId, startDate, completeDate, value.state]})
+      await query({text: INSERT_STRING, values: [value.id, value.name, boardId, startDate, endDate,  completeDate, value.state]})
     } else {
       // log('Skipping Sprint name=' + value.name + ', id=' + value.id + ', startDate=' + startDate + ', minimum startDate=' + conf.jiraStartDate)
     }

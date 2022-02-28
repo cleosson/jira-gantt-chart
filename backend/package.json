@@ -5,11 +5,16 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
+    "db:create": "node scripts/createDatabase.js && node scripts/createTable.js",
+    "db:seed": "node scripts/insertMockData.js",
+    "db:drop": "node scripts/dropDatabase.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
     "express": "^4.17.2",
     "express-graphql": "^0.12.0",
     "got": "^12.0.1",

@@ -1,6 +1,7 @@
-const {Client } = require('pg');
+import 'dotenv/config';
+import pg from 'pg';
 
-const client = new Client({
+const client = new pg.Client({
   host: process.env.POSTGRES_HOST,
   user: process.env.POSTGRES_USER,
   database: process.env.POSTGRES_DATABASE,

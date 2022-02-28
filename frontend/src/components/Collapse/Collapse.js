@@ -1,7 +1,7 @@
 import React from "react";
 import styled from 'styled-components';
 
-const InnerColappse = styled.div`
+const InnerColapse = styled.div`
   display: flex;
 `;
   
@@ -32,14 +32,14 @@ const Content = styled.div`
 
 const Collapse = ({ isEpicList, isAssignList, data, open, onClick, contentComponents }) => {
   return (
-    <InnerColappse open={open}>
+    <InnerColapse>
       <Heading isEpicList={isEpicList} open={open} onClick={onClick}>
         <Assign>{data.name}</Assign>
       </Heading>
       <Content isAssignList={isAssignList} open={open}>
         {contentComponents}
       </Content>
-    </InnerColappse>
+    </InnerColapse>
   )
 };
 
